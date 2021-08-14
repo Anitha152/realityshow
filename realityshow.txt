@@ -1,0 +1,106 @@
+import pymysql
+mydb=pymysql.connect(host="localhost",user="root",password="Anitharajan@123",db="realityshow")
+mycursor=mydb.cursor()
+class realityshows:
+    def listOfRealityShows(self):
+        print("list Of Reality Shows: ")
+        mycursor.execute("select * from r_shows")
+        data1=mycursor.fetchall()
+        #print(data1)
+        for i in data1:
+            print("show_id:",i[0],",","show_name:",i[1],"," ,"timing:",i[2],"," ,"epi_num:",i[3])
+        s_name=str(input("enter your fav show name:"))
+        return s_name
+        print()
+        
+class contestants:
+    def __init__(self,sname):
+        self.sname=sname
+         
+    def listOfContestants(self):
+        mycursor.execute("select * from r_shows where show_name like %s",(self.sname))
+        a=mycursor.fetchall()
+        print("list of contestants:")
+        mycursor.execute("select * from contestant_details")
+        data2=mycursor.fetchall()
+        print(data2)
+        print("show_id:",a[0][0])
+        for i in data2:
+            print("c_id:",i[0],",","c_name:",i[1],",","c_age:",i[2])
+        cname=str(input("enter your fav contestant name:"))
+        return cname
+        print()
+class voting_contestant:
+    def __init__(self,useraname,cname):
+        self.username=username
+        self.cname=cname
+    def voteforcontestant(self):
+        mycursor.execute("select login_id from user_details where username like %s",(self.username))
+        data9=mycursor.fetchall()
+        mycursor.execute("select c_id,c_name from contestant_details where c_name like %s",(self.cname))
+        data5=mycursor.fetchall()
+        b=data5[0][0]
+        c=data5[0][1]
+        print(b,c)
+        #print("login id is________________________",data9[0][0])
+        #login_id=self.login_id
+        m=input("Are you ready for voting?"+"\n"+" Yes or No: ")
+        if m=='Yes':
+            vote_id=int(input("vote id is:"))
+            fav_cname=str(input("for Whom you want to vote?"))
+            votes=int(input("votes:"))
+            mycursor.execute("insert into voting(voteid,login_id,c_id,c_name,vote_count) values(%s,%s,%s,%s,%s)",(vote_id,data9[0][0],b,fav_cname,votes,))
+            mydb.commit()
+            
+class eliminated_contestant:
+    def __init__(self,sname,cname):
+        self.sname=sname
+        self.cname=cname
+    def E_contestant(self):
+        mycursor.execute("select show_id from r_shows where show_name like %s",(self.sname,))
+        data6=mycursor.fetchall()
+        #mycursor.execute("select c_id,c_name from contestant_details where c_name like %s",(self.cname,))
+        #data7=mycursor.fetchall()
+        n=data6[0][0]
+        mycursor.execute("select min(vote_count) from voting")
+        data8=mycursor.fetchall()
+        p=data8[0][0]
+        mycursor.execute("select c_id,c_name,vote_count from voting where vote_count like %s",(p,))
+        data0=mycursor.fetchall()
+        print(data0)
+        m,b,c= data0[0][0],data0[0][1],data0[0][2]
+        print("the contestant to be elimininate:",data0)
+        e_id=int(input("eid:"))
+        mycursor.execute("insert into eliminate_contestant(e_id,c_id,show_id,c_name,c_vote) values(%s,%s,%s,%s,%s)",(e_id,m,n,b,c,))
+        mydb.commit()
+        
+
+if __name__=='__main__':
+    print("Are you a user or newuser?"+'\n'+"type your destination:")
+    destination=str(input())
+    if destination=="newuser":
+       username=str(input("enter the username:"))
+       login_id=int(input("enter the input:"))
+       mailid=str(input('enter the mail id:'))
+       gender=str(input('Male or Female:'))
+       mycursor.execute("insert into user_details(login_id,username,mailid,gender) values(%s,%s,%s,%s)",(login_id,username,mailid,gender))
+       mydb.commit()
+       print("logined successfully")
+    if destination=="user":
+       username=str(input("enter the username:"))
+       mailid=str(input('enter the mail id:'))
+       mycursor.execute("select * from user_details where username like %s",(username,))
+       data3=mycursor.fetchall()
+       print(data3)
+       login_id=data3[0]
+    ob1=realityshows()
+    sname=ob1.listOfRealityShows()
+    
+    ob2=contestants(sname)
+    cname=ob2.listOfContestants()
+
+    ob3=voting_contestant(username,cname)
+    ob3.voteforcontestant()
+
+    ob4=eliminated_contestant(sname,cname)
+    ob4.E_contestant()
